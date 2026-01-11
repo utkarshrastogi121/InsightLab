@@ -20,6 +20,8 @@ const redisClient: RedisClientType = createClient({
 redisClient.on("connect", () => console.log("Redis connected"));
 redisClient.on("error", (err) => console.error("Redis error:", err));
 
-await redisClient.connect();
+(async () => {
+  await redisClient.connect();
+})();
 
 export default redisClient;
