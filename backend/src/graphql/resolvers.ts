@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import User from "../models/User";
 import News from "../models/News";
+import redisClient from "../config/redis";
 import { signToken } from "../utils/jwt";
 
 export const root = {
@@ -32,6 +33,16 @@ export const root = {
   },
 
   newsByCategory: async ({ category }: any) => {
-    return News.find({ category }).sort({ scrapedAt: -1 }).limit(20);
-  },
+    const cacheKey = `news:${category}`;
+
+    const cached = await redisClient.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+
+    const news = await News.find({ category })
+      .sort({ scrapedAt: -1 })
+      .limit(20);
+
+    await redisClient.setEx(cacheKey, 300, JSON.stringify(news));
+    return news;
+  }
 };
